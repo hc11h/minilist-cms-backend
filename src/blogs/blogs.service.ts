@@ -118,14 +118,14 @@ export class BlogsService {
           scheduledAt: { lte: now },
           isDeleted: false,
         },
-        select: { id: true }, // Only fetch what's necessary
+        select: { id: true }, 
       });
 
       if (blogs.length === 0) return;
 
       this.logger.log(`Publishing ${blogs.length} scheduled blog(s)...`);
 
-      // Batch update in parallel using Promise.all
+
       await Promise.all(
         blogs.map((blog) =>
           this.prisma.blog.update({

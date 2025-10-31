@@ -28,7 +28,7 @@ export class AuthController {
     const token = req.cookies['authToken'];
     if (!token) throw new UnauthorizedException();
     const payload = this.jwtService.verify(token);
-    // Fetch user from DB
+
     const user = await this.prisma.user.findUnique({
       where: { email: payload.email },
       select: {
@@ -36,7 +36,6 @@ export class AuthController {
         email: true,
         name: true,
         image: true,
-        // role: true,
         lastLogin: true,
       },
     });
@@ -91,8 +90,8 @@ export class AuthController {
 
     res.cookie('authToken', token, {
       httpOnly: true,
-      secure: isProduction, // only true in production
-      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-domain HTTPS, 'lax' for local dev
+      secure: isProduction, 
+      sameSite: isProduction ? 'none' : 'lax', 
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });

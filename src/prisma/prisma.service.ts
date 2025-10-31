@@ -20,7 +20,7 @@ export class PrismaService
   }
 
   enableShutdownHooks(app: INestApplication) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (this as any).$on('beforeExit', async () => {
       await app.close();
     });
