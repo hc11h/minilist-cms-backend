@@ -1,23 +1,21 @@
 import {
   Controller,
   Get,
+  Query,
   Req,
   Res,
   UnauthorizedException,
   UseGuards,
+  UseFilters,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { OAuthExceptionFilter } from './filters/oauth-exception.filter';
+
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private jwtService: JwtService,
-    private authService: AuthService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -26,78 +24,50 @@ export class AuthController {
   @Get('me')
   async getProfile(@Req() req) {
     const token = req.cookies['authToken'];
-    if (!token) throw new UnauthorizedException();
-    const payload = this.jwtService.verify(token);
-    // Fetch user from DB
-    const user = await this.prisma.user.findUnique({
-      where: { email: payload.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        // role: true,
-        lastLogin: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+    if (!token) {
+      throw new UnauthorizedException();
     }
 
-    return user;
+    const payload = this.authService.verifyToken(token);
+    return this.authService.getUserByEmail(payload.email);
   }
 
   @Get('logout')
   logout(@Res() res: Response) {
-    res.clearCookie('authToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      path: '/',
-    });
-
+    const cookieOptions = this.authService.getCookieOptions();
+    res.clearCookie('authToken', cookieOptions);
     return res.status(200).json({ message: 'Logged out successfully' });
   }
 
   @Get('callback/google')
+  @UseFilters(OAuthExceptionFilter)
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const profile = req.user;
-    const user = await this.authService.validateOAuthLogin(profile);
+  async googleAuthRedirect(
+    @Req() req,
+    @Res() res: Response,
+    @Query('error') error?: string,
+  ) {
+    const clientUrl = this.authService.getClientUrl();
 
-    const token = this.jwtService.sign({ email: user.email });
 
-    const clientUrl = process.env.CLIENT_URL;
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    if (!clientUrl) {
-      console.error('CLIENT_URL is not defined in environment variables.');
-      return res
-        .status(500)
-        .send('Server configuration error: Missing CLIENT_URL.');
+    if (error) {
+      console.log(`OAuth error detected: ${error}. Redirecting to frontend.`);
+      return res.redirect(clientUrl);
     }
-
-    let domain: string;
 
     try {
-      domain = new URL(clientUrl).hostname;
+      const profile = req.user;
+      if (!profile) {
+        console.log('No user profile found. Redirecting to frontend.');
+        return res.redirect(clientUrl);
+      }
+
+      const result = await this.authService.handleOAuthCallback(profile);
+      res.cookie('authToken', result.token, result.cookieOptions);
+      return res.redirect(result.redirectUrl);
     } catch (err) {
-      console.error('Invalid CLIENT_URL format:', err);
-      return res
-        .status(500)
-        .send('Server configuration error: Invalid CLIENT_URL.');
+      console.error('Error during OAuth callback:', err);
+      return res.redirect(clientUrl);
     }
-
-    res.cookie('authToken', token, {
-      httpOnly: true,
-      secure: isProduction, // only true in production
-      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-domain HTTPS, 'lax' for local dev
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-
-    console.log('Cookie set for domain:', domain);
-    return res.redirect(`${clientUrl}/auth/success`);
   }
 }

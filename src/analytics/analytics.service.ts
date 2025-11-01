@@ -7,7 +7,7 @@ export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
   async getMetricsForUser(email: string) {
-    // Fetch the user along with relations
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
@@ -21,11 +21,11 @@ export class AnalyticsService {
       throw new NotFoundException('User not found');
     }
 
-    // Login metrics
+  
     const loginCount = user.loginHistory.length;
     const lastLogin = user.lastLogin;
 
-    // Editor metrics (user may be associated with many editors)
+ 
     const editorIds = user.editors.map((editor) => editor.id);
     let editorMetrics = {};
     if (editorIds.length > 0) {
@@ -45,7 +45,7 @@ export class AnalyticsService {
       };
     }
 
-    // Blog author metrics (user may be associated with many blog author records)
+
     const blogAuthorIds = user.blogAuthors.map((author) => author.id);
     let authorMetrics = {};
     if (blogAuthorIds.length > 0) {
