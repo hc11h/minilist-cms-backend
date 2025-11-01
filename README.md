@@ -1,98 +1,199 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# MiniList CMS Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A simple, fun headless CMS backend built with NestJS, PostgreSQL, and Prisma. Perfect for managing blogs, content editors, and authors with a clean REST API.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+This headless CMS provides everything you need to manage your content:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **🔐 Authentication**: Google OAuth login with JWT-based sessions
+- **📝 Blog Management**: Create, update, publish, schedule, and manage blogs with statuses (Draft, Private, Public, Scheduled)
+- **✍️ Content Editors**: Rich text content management with multiple editor instances
+- **👤 Author Management**: Create and manage blog authors with profiles
+- **🔑 API Keys**: Generate and manage API keys for programmatic access
+- **📊 Analytics Dashboard**: Track login history, blog statistics, and content metrics
+- **🔍 SEO Support**: Built-in SEO fields (title, description, keywords) for each blog
+- **🗑️ Soft Delete**: Safe content deletion with recovery capability
+- **📚 Login History**: Track user authentication history
 
-## Project setup
+## 🐳 Self-Hosting with Docker
+
+The easiest way to get started is using Docker Compose. It handles everything for you!
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) installed
+- A PostgreSQL database connection string
+- Google OAuth credentials (for authentication)
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd minilist-cms-backend
+   ```
+
+2. **Create environment file**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Configure environment variables**
+   
+   Edit `.env` and set the following variables:
+   
+   ```env
+   # Required: PostgreSQL database connection URL
+   DATABASE_URL=postgresql://user:password@host:5432/database?schema=public
+   
+   # Required: Generate a strong secret key
+   JWT_SECRET=your-super-secret-jwt-key-change-this
+   
+   # Required: Google OAuth credentials
+   # Get these from: https://console.cloud.google.com/apis/credentials
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   
+   # Required: Your frontend URL
+   CLIENT_URL=http://localhost:3000
+   
+   # Required: Your backend URL (for OAuth callbacks)
+   BACKEND_BASE_URL=http://localhost:3001
+   ```
+
+4. **Build and start**
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will:
+   - Build the NestJS application
+   - Run database migrations
+   - Start the API server on port 3001
+
+5. **Verify it's running**
+   ```bash
+   curl http://localhost:3001/api
+   ```
+   
+   You should see: `{"status":"Backend is working!"}`
+
+### Managing the Services
 
 ```bash
-$ yarn install
+# View logs
+docker-compose logs -f app
+
+# Stop services
+docker-compose down
+
+# Restart services
+docker-compose restart
 ```
 
-## Compile and run the project
+## 🛠️ Development Setup
 
-```bash
-# development
-$ yarn run start
+If you prefer to run it locally without Docker:
 
-# watch mode
-$ yarn run start:dev
+### Prerequisites
 
-# production mode
-$ yarn run start:prod
-```
+- Node.js 20+ and Yarn
+- A PostgreSQL database connection string
 
-## Run tests
+### Setup
 
-```bash
-# unit tests
-$ yarn run test
+1. **Install dependencies**
+   ```bash
+   yarn install
+   ```
 
-# e2e tests
-$ yarn run test:e2e
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-# test coverage
-$ yarn run test:cov
-```
+   Make sure to set `DATABASE_URL` in your `.env`:
+   ```env
+   DATABASE_URL=postgresql://user:password@host:5432/database?schema=public
+   ```
 
-## Deployment
+3. **Run migrations**
+   ```bash
+   yarn prisma migrate deploy
+   ```
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+4. **Generate Prisma Client**
+   ```bash
+   yarn prisma generate
+   ```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+5. **Start the server**
+   ```bash
+   # Development mode
+   yarn start:dev
+   
+   # Production mode
+   yarn build
+   yarn start:prod
+   ```
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
+## 📖 API Endpoints
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+All endpoints are prefixed with `/api`. Authentication is required for most endpoints (JWT token in cookies).
 
-## Resources
+### Authentication
+- `GET /api/auth/google` - Initiate Google OAuth login
+- `GET /api/auth/callback/google` - OAuth callback
+- `GET /api/auth/me` - Get current user profile
+- `GET /api/auth/logout` - Logout
 
-Check out a few resources that may come in handy when working with NestJS:
+### Blogs
+- `GET /api/blogs` - List all blogs
+- `POST /api/blogs` - Create a blog
+- `GET /api/blogs/:id` - Get blog by ID
+- `PUT /api/blogs/:id` - Update blog
+- `DELETE /api/blogs/:id` - Soft delete blog
+- `POST /api/blogs/:id/publish` - Publish blog
+- `POST /api/blogs/:id/schedule` - Schedule blog for later
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Editors
+- `GET /api/editor` - List all editors
+- `POST /api/editor` - Create editor
+- `GET /api/editor/:id` - Get editor by ID
+- `PUT /api/editor/:id` - Update editor
+- `DELETE /api/editor/:id` - Soft delete editor
 
-## Support
+### Authors
+- `GET /api/authors` - List all authors
+- `POST /api/authors` - Create author
+- `GET /api/authors/:id` - Get author by ID
+- `PUT /api/authors/:id` - Update author
+- `DELETE /api/authors/:id` - Soft delete author
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### API Keys
+- `POST /api/api-key` - Generate API key
+- `GET /api/api-key` - Get API key status
+- `DELETE /api/api-key` - Deactivate API key
 
-## Stay in touch
+### Analytics
+- `GET /api/dashboard/metrics` - Get user metrics and statistics
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 🏗️ Tech Stack
 
-## License
+- **Framework**: NestJS (Node.js)
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Authentication**: Passport.js (Google OAuth + JWT)
+- **Validation**: class-validator, class-transformer
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📝 Database Schema
+
+The CMS uses the following main models:
+- **User**: User accounts with OAuth integration
+- **Blog**: Blog posts with SEO and scheduling
+- **Editor**: Rich text content editors
+- **BlogAuthor**: Author profiles
+- **ApiKey**: API keys for programmatic access
+- **LoginHistory**: Authentication tracking
