@@ -6,9 +6,10 @@ import { GoogleProfile } from './types';
 export interface CookieOptions {
   httpOnly: boolean;
   secure: boolean;
-  sameSite: 'none' | 'lax';
+  sameSite: 'none' | 'lax' | 'strict';
   maxAge: number;
   path: string;
+  domain?: string;
 }
 
 export interface OAuthCallbackResult {
@@ -105,15 +106,66 @@ export class AuthService {
     return process.env.CLIENT_URL || 'http://localhost:3000';
   }
 
-  getCookieOptions(): CookieOptions {
+  getCookieOptions(clientUrl?: string): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production';
-    return {
+    const isCrossOrigin = this.isCrossOriginRequest(clientUrl);
+    const isLocalhost = this.isLocalhost(clientUrl);
+    
+     
+    let secure: boolean;
+    let sameSite: 'none' | 'lax' | 'strict';
+    
+    if (isCrossOrigin) {
+      
+      sameSite = 'none';
+      secure = true;
+    } else {
+      sameSite = 'lax';
+      secure = isProduction;
+    }
+    
+    const options: CookieOptions = {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: secure,
+      sameSite: sameSite,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     };
+    return options;
+  }
+
+  private isLocalhost(clientUrl?: string): boolean {
+    if (!clientUrl) {
+      clientUrl = this.getClientUrl();
+    }
+
+    try {
+      const url = new URL(clientUrl);
+      return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    } catch (err) {
+      return false;
+    }
+  }
+
+  private isCrossOriginRequest(clientUrl?: string): boolean {
+    if (!clientUrl) {
+      clientUrl = this.getClientUrl();
+    }
+
+    try {
+      const frontendUrl = new URL(clientUrl);
+      const backendUrl = process.env.BACKEND_BASE_URL || 'http://localhost:3001';
+      const backendUrlObj = new URL(backendUrl);
+      
+     
+      return (
+        frontendUrl.protocol !== backendUrlObj.protocol ||
+        frontendUrl.hostname !== backendUrlObj.hostname ||
+        frontendUrl.port !== backendUrlObj.port
+      );
+    } catch (err) {
+      return true;
+    }
   }
 
   async handleOAuthCallback(profile: GoogleProfile | null): Promise<OAuthCallbackResult> {
@@ -125,11 +177,13 @@ export class AuthService {
 
     const user = await this.validateOAuthLogin(profile);
     const token = this.generateToken(user.email);
-    const cookieOptions = this.getCookieOptions();
+    
+    const cookieOptions = this.getCookieOptions(clientUrl);
 
     try {
       const domain = new URL(clientUrl).hostname;
-      console.log('Cookie set for domain:', domain);
+      const isCrossOrigin = this.isCrossOriginRequest(clientUrl);
+      console.log('Cookie set for domain:', domain, 'Cross-origin:', isCrossOrigin);
     } catch (err) {
       console.error('Invalid CLIENT_URL format:', err);
     }

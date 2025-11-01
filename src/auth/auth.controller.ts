@@ -34,7 +34,8 @@ export class AuthController {
 
   @Get('logout')
   logout(@Res() res: Response) {
-    const cookieOptions = this.authService.getCookieOptions();
+    const clientUrl = this.authService.getClientUrl();
+    const cookieOptions = this.authService.getCookieOptions(clientUrl);
     res.clearCookie('authToken', cookieOptions);
     return res.status(200).json({ message: 'Logged out successfully' });
   }
